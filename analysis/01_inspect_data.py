@@ -129,10 +129,75 @@ print(cnt)
 # print(cnt)
 # print("\n")
 
+# cnt = 0
+
+# prev_last = None
+# pending_last = None
+
+# for chunk in pd.read_csv(csv_path, chunksize=10_000):
+#     motor = chunk["Motor_current"].reset_index(drop=True)
+
+#     # 이전 chunk의 마지막 값 검사
+#     if pending_last is not None:
+#         current = pending_last
+#         previous = prev_last
+#         next_value = motor.iloc[0]
+
+#         if (
+#             1 < current < 3
+#             and previous >= 3
+#             and next_value <= 1
+#         ):
+#             cnt += 1
+
+#     # 현재 chunk 내부 검사
+#     for i in range(len(motor)):
+#         current = motor.iloc[i]
+
+#         if not (1 < current < 3):
+#             continue
+
+#         # 첫 번째 행
+#         if i == 0:
+#             if prev_last is None:
+#                 continue
+
+#             previous = prev_last
+#             next_value = motor.iloc[i + 1]
+
+#         # 마지막 행은 다음 chunk가 필요하므로 보류
+#         elif i == len(motor) - 1:
+#             continue
+
+#         # 일반적인 경우
+#         else:
+#             previous = motor.iloc[i - 1]
+#             next_value = motor.iloc[i + 1]
+
+#         if previous >= 3 and next_value <= 1:
+#             cnt += 1
+
+#     # 다음 chunk를 위해 마지막 두 값 기억
+#     if len(motor) >= 2:
+#         prev_last = motor.iloc[-2]
+#         pending_last = motor.iloc[-1]
+
+# print("\n3A 이상 → 1~3A → 1A 이하 패턴의 개수")
+# print(cnt)
+
+# 1~3A 값 209개 중 187개가
+# 3A 이상 → 1~3A → 1A 이하 패턴에 해당
+# chunksize 경계까지 고려해도 결과는 187개로 동일
+# 나머지 22개의 패턴은 추가 확인 필요
+
+# 1~3A 값 중 기존 패턴에 해당하지 않는 22개 확인
+
 cnt = 0
 
 prev_last = None
 pending_last = None
+
+exception_count = 0
 
 for chunk in pd.read_csv(csv_path, chunksize=10_000):
     motor = chunk["Motor_current"].reset_index(drop=True)
@@ -143,12 +208,10 @@ for chunk in pd.read_csv(csv_path, chunksize=10_000):
         previous = prev_last
         next_value = motor.iloc[0]
 
-        if (
-            1 < current < 3
-            and previous >= 3
-            and next_value <= 1
-        ):
-            cnt += 1
+        if 1 < current < 3:
+            if not (previous >= 3 and next_value <= 1):
+                print(previous, current, next_value)
+                exception_count += 1
 
     # 현재 chunk 내부 검사
     for i in range(len(motor)):
@@ -174,19 +237,41 @@ for chunk in pd.read_csv(csv_path, chunksize=10_000):
             previous = motor.iloc[i - 1]
             next_value = motor.iloc[i + 1]
 
-        if previous >= 3 and next_value <= 1:
-            cnt += 1
+        if not (previous >= 3 and next_value <= 1):
+            print(previous, current, next_value)
+            exception_count += 1
 
     # 다음 chunk를 위해 마지막 두 값 기억
     if len(motor) >= 2:
         prev_last = motor.iloc[-2]
         pending_last = motor.iloc[-1]
 
-print("\n3A 이상 → 1~3A → 1A 이하 패턴의 개수")
-print(cnt)
+print("\n예외 패턴 개수")
+print(exception_count)
 
-# 1~3A 값 209개 중 187개가
-# 3A 이상 → 1~3A → 1A 이하 패턴에 해당
-# chunksize 경계까지 고려해도 결과는 187개로 동일
-# 나머지 22개의 패턴은 추가 확인 필요
-# TODO: 1~3A 값 중 기존 패턴에 해당하지 않는 22개 확인
+# ===============================================
+# Motor_current 기반 운전 상태 분석 메모
+# ===============================================
+# 목표: 운전/정지 라벨이 없어 Motor_current로 설비 운전 이력을 추정
+#
+# 임시 기준
+# - 정지: <= 1A
+# - 운전: >= 3A
+# - 중간값: 1A < current < 3A
+#
+# 전체 데이터에서 1~3A 값은 209개
+# - 187개: >=3A → 1~3A → <=1A (운전 → 정지 후보)
+# - 나머지 22개:
+#   - <=1A → 1~3A → >=3A 형태의 기동 후보 다수
+#   - >=3A → 1~3A → >=3A 형태의 일시적 전류 하락도 존재
+#
+# 의문점:
+# 종료 후보(187개)에 비해 기동 후보가 너무 적음.
+# => 기동 시 1~3A를 거치지 않고 <=1A → >=3A로 바로 변하는 경우가 있을 수 있음.
+#
+# TODO:
+# 1. 전체 시계열에서 <=1A → >=3A START 후보 추출
+# 2. >=3A → <=1A STOP 후보 추출
+# 3. START/STOP 개수 비교
+# 4. 시간순으로 START → STOP → START → STOP 형태로 번갈아 나오는지 확인
+# 5. 결과를 바탕으로 operation cycle 생성 규칙 확정
