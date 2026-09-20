@@ -192,62 +192,62 @@ print(cnt)
 
 # 1~3A 값 중 기존 패턴에 해당하지 않는 22개 확인
 
-cnt = 0
+# cnt = 0
 
-prev_last = None
-pending_last = None
+# prev_last = None
+# pending_last = None
 
-exception_count = 0
+# exception_count = 0
 
-for chunk in pd.read_csv(csv_path, chunksize=10_000):
-    motor = chunk["Motor_current"].reset_index(drop=True)
+# for chunk in pd.read_csv(csv_path, chunksize=10_000):
+#     motor = chunk["Motor_current"].reset_index(drop=True)
 
-    # 이전 chunk의 마지막 값 검사
-    if pending_last is not None:
-        current = pending_last
-        previous = prev_last
-        next_value = motor.iloc[0]
+#     # 이전 chunk의 마지막 값 검사
+#     if pending_last is not None:
+#         current = pending_last
+#         previous = prev_last
+#         next_value = motor.iloc[0]
 
-        if 1 < current < 3:
-            if not (previous >= 3 and next_value <= 1):
-                print(previous, current, next_value)
-                exception_count += 1
+#         if 1 < current < 3:
+#             if not (previous >= 3 and next_value <= 1):
+#                 print(previous, current, next_value)
+#                 exception_count += 1
 
-    # 현재 chunk 내부 검사
-    for i in range(len(motor)):
-        current = motor.iloc[i]
+#     # 현재 chunk 내부 검사
+#     for i in range(len(motor)):
+#         current = motor.iloc[i]
 
-        if not (1 < current < 3):
-            continue
+#         if not (1 < current < 3):
+#             continue
 
-        # 첫 번째 행
-        if i == 0:
-            if prev_last is None:
-                continue
+#         # 첫 번째 행
+#         if i == 0:
+#             if prev_last is None:
+#                 continue
 
-            previous = prev_last
-            next_value = motor.iloc[i + 1]
+#             previous = prev_last
+#             next_value = motor.iloc[i + 1]
 
-        # 마지막 행은 다음 chunk가 필요하므로 보류
-        elif i == len(motor) - 1:
-            continue
+#         # 마지막 행은 다음 chunk가 필요하므로 보류
+#         elif i == len(motor) - 1:
+#             continue
 
-        # 일반적인 경우
-        else:
-            previous = motor.iloc[i - 1]
-            next_value = motor.iloc[i + 1]
+#         # 일반적인 경우
+#         else:
+#             previous = motor.iloc[i - 1]
+#             next_value = motor.iloc[i + 1]
 
-        if not (previous >= 3 and next_value <= 1):
-            print(previous, current, next_value)
-            exception_count += 1
+#         if not (previous >= 3 and next_value <= 1):
+#             print(previous, current, next_value)
+#             exception_count += 1
 
-    # 다음 chunk를 위해 마지막 두 값 기억
-    if len(motor) >= 2:
-        prev_last = motor.iloc[-2]
-        pending_last = motor.iloc[-1]
+#     # 다음 chunk를 위해 마지막 두 값 기억
+#     if len(motor) >= 2:
+#         prev_last = motor.iloc[-2]
+#         pending_last = motor.iloc[-1]
 
-print("\n예외 패턴 개수")
-print(exception_count)
+# print("\n예외 패턴 개수")
+# print(exception_count)
 
 # ===============================================
 # Motor_current 기반 운전 상태 분석 메모
@@ -275,3 +275,145 @@ print(exception_count)
 # 3. START/STOP 개수 비교
 # 4. 시간순으로 START → STOP → START → STOP 형태로 번갈아 나오는지 확인
 # 5. 결과를 바탕으로 operation cycle 생성 규칙 확정
+
+#  0 -> 5 , 5 -> 0 등 중간값 없이 바로 바뀌는 개수 비교,
+#  start, stop이 번갈아 나오는지 확인
+# start_cnt = 0
+# stop_cnt = 0
+# events = []
+
+# for chunk in pd.read_csv(csv_path, chunksize=10_000):
+#     motor = chunk["Motor_current"].reset_index(drop=True)
+
+#     for i in range(len(motor) - 2):
+#         current = motor.iloc[i]
+#         next_value = motor.iloc[i + 1]
+#         next_next_value = motor.iloc[i + 2]
+#         event_added = False
+#         # timestamp = chunk["timestamp"].iloc[i + 1] # 05:10:00  0.04   ← 마지막으로 확인된 정지
+#         #                                            # 05:10:10  5.40   ← 처음으로 확인된 운전
+
+#         # START 조건
+#         if current <= 1:
+#             if next_value >= 3:
+#                 start_cnt += 1
+#                 events.append(("START", chunk["timestamp"].iloc[i + 1]))
+#                 event_added = True
+#             elif (1 < next_value < 3 and next_next_value >= 3):
+#                 start_cnt += 1
+#                 events.append(("START", chunk["timestamp"].iloc[i + 2]))
+#                 event_added = True
+            
+
+#         # STOP 조건
+#         elif current >= 3:
+#             if next_value <= 1:
+#                 stop_cnt += 1
+#                 events.append(("STOP", chunk["timestamp"].iloc[i + 1]))
+#                 event_added = True
+#             elif (3 > next_value > 1 and next_next_value <= 1):
+#                 stop_cnt += 1
+#                 events.append(("STOP", chunk["timestamp"].iloc[i + 2]))
+#                 event_added = True
+
+#         else:
+#            continue
+
+#         # 연속된 운행이 감지되면 print
+#         if event_added and len(events) >= 2:
+#             if events[-2][0] == events[-1][0]:
+#                 print(events[-2], events[-1])
+
+# print("직접 START:", start_cnt)
+# print("직접 STOP:", stop_cnt)
+
+# 결과
+# ('START', '2020-03-19 09:47:14') ('START', '2020-03-19 10:20:47')
+# ('START', '2020-04-06 06:01:51') ('START', '2020-04-06 06:27:47')
+# ('START', '2020-04-09 01:41:07') ('START', '2020-04-09 04:59:55')
+# ('START', '2020-04-29 23:27:16') ('START', '2020-04-29 23:53:03')
+# ('STOP', '2020-05-18 01:25:01') ('STOP', '2020-05-18 01:42:41')
+# ('STOP', '2020-06-19 01:42:18') ('STOP', '2020-06-19 01:56:20')
+# ('STOP', '2020-07-20 06:00:15') ('STOP', '2020-07-20 06:19:35')
+# ('START', '2020-08-11 10:19:03') ('START', '2020-08-11 10:43:30')
+# ('START', '2020-08-19 07:42:38') ('START', '2020-08-19 08:02:28')
+# 직접 START: 10376
+# 직접 STOP: 10203
+
+#  첫 번째 연속된 운행의 범위를 프린트하여 원인 확인
+# for chunk in pd.read_csv(csv_path, chunksize=10_000):
+#     chunk["timestamp"] = pd.to_datetime(chunk["timestamp"])
+#     condition = (
+#         (chunk["timestamp"] >= "2020-03-19 09:47:14")
+#         & (chunk["timestamp"] <= "2020-03-19 10:20:47")
+#     )
+#     print(
+#         chunk.loc[condition, ["timestamp", "Motor_current"]]
+#     )
+# => 기존 코드는 청크 경계를 확인하지 않아서 경계에 있는 값을 놓치는 것으로 확인
+
+
+# 청크 경계도 확인하도록 코드 수정
+start_cnt = 0
+stop_cnt = 0
+events = []
+
+previous_rows = None
+
+for chunk in pd.read_csv(csv_path, chunksize=10_000):
+    
+    # 이전 chunk의 마지막 2행을 현재 chunk 앞에 붙임
+    if previous_rows is not None:
+        chunk = pd.concat([previous_rows, chunk], ignore_index=True)
+    else:
+        chunk = chunk.reset_index(drop=True)
+
+    motor = chunk["Motor_current"]
+
+    for i in range(len(motor) - 2):
+        current = motor.iloc[i]
+        next_value = motor.iloc[i + 1]
+        next_next_value = motor.iloc[i + 2]
+        event_added = False
+
+        # START 조건
+        if current <= 1:
+            if next_value >= 3:
+                start_cnt += 1
+                events.append(("START", chunk["timestamp"].iloc[i + 1]))
+                event_added = True
+            elif (1 < next_value < 3 and next_next_value >= 3):
+                start_cnt += 1
+                events.append(("START", chunk["timestamp"].iloc[i + 2]))
+                event_added = True
+            
+
+        # STOP 조건
+        elif current >= 3:
+            if next_value <= 1:
+                stop_cnt += 1
+                events.append(("STOP", chunk["timestamp"].iloc[i + 1]))
+                event_added = True
+            elif (3 > next_value > 1 and next_next_value <= 1):
+                stop_cnt += 1
+                events.append(("STOP", chunk["timestamp"].iloc[i + 2]))
+                event_added = True
+
+        else:
+           continue
+
+        # 연속된 운행이 감지되면 print
+        if event_added and len(events) >= 2:
+            if events[-2][0] == events[-1][0]:
+                print(events[-2], events[-1])
+
+    # 이번 chunk의 마지막 2행을 다음 chunk를 위해 저장
+    previous_rows = chunk.tail(2).copy()
+
+print("직접 START:", start_cnt)
+print("직접 STOP:", stop_cnt)
+
+# 결과
+# (연속된 운행 없음)
+# 직접 START: 10393
+# 직접 STOP: 10393
