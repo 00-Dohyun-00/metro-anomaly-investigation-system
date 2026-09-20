@@ -324,8 +324,8 @@ print(cnt)
 #             if events[-2][0] == events[-1][0]:
 #                 print(events[-2], events[-1])
 
-# print("직접 START:", start_cnt)
-# print("직접 STOP:", stop_cnt)
+# print("START:", start_cnt)
+# print("STOP:", stop_cnt)
 
 # 결과
 # ('START', '2020-03-19 09:47:14') ('START', '2020-03-19 10:20:47')
@@ -337,8 +337,8 @@ print(cnt)
 # ('STOP', '2020-07-20 06:00:15') ('STOP', '2020-07-20 06:19:35')
 # ('START', '2020-08-11 10:19:03') ('START', '2020-08-11 10:43:30')
 # ('START', '2020-08-19 07:42:38') ('START', '2020-08-19 08:02:28')
-# 직접 START: 10376
-# 직접 STOP: 10203
+# START: 10376
+# STOP: 10203
 
 #  첫 번째 연속된 운행의 범위를 프린트하여 원인 확인
 # for chunk in pd.read_csv(csv_path, chunksize=10_000):
@@ -410,10 +410,10 @@ for chunk in pd.read_csv(csv_path, chunksize=10_000):
     # 이번 chunk의 마지막 2행을 다음 chunk를 위해 저장
     previous_rows = chunk.tail(2).copy()
 
-print("직접 START:", start_cnt)
-print("직접 STOP:", stop_cnt)
+print("START:", start_cnt)
+print("STOP:", stop_cnt)
 
 # 결과
 # (연속된 운행 없음)
-# 직접 START: 10393
-# 직접 STOP: 10393
+# START: 10393
+# STOP: 10393
