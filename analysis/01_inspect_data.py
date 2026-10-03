@@ -431,88 +431,88 @@ print(cnt)
 # ]
 # ===============================
 
-# previous_rows = None
-# operation_cycles = []
+previous_rows = None
+operation_cycles = []
 
-# one_cycle = {
-#     "start_time" : None,
-#     "end_time" : None,
-#     "duration" : None
-# }
+one_cycle = {
+    "start_time" : None,
+    "end_time" : None,
+    "duration" : None
+}
 
-# longest_time = {
-#     "start_time" : None,
-#     "end_time" : None,
-#     "duration" : None
-# }
-# shortest_time = {
-#     "start_time" : None,
-#     "end_time" : None,
-#     "duration" : None
-# }
+longest_time = {
+    "start_time" : None,
+    "end_time" : None,
+    "duration" : None
+}
+shortest_time = {
+    "start_time" : None,
+    "end_time" : None,
+    "duration" : None
+}
 
-# for chunk in pd.read_csv(csv_path, chunksize=10_000):
+for chunk in pd.read_csv(csv_path, chunksize=10_000):
     
-#     # 이전 chunk의 마지막 2행을 현재 chunk 앞에 붙임
-#     if previous_rows is not None:
-#         chunk = pd.concat([previous_rows, chunk], ignore_index=True)
-#     else:
-#         chunk = chunk.reset_index(drop=True)
+    # 이전 chunk의 마지막 2행을 현재 chunk 앞에 붙임
+    if previous_rows is not None:
+        chunk = pd.concat([previous_rows, chunk], ignore_index=True)
+    else:
+        chunk = chunk.reset_index(drop=True)
 
-#     motor = chunk["Motor_current"]
+    motor = chunk["Motor_current"]
 
-#     for i in range(len(motor) - 2):
-#         current = motor.iloc[i]
-#         next_value = motor.iloc[i + 1]
-#         next_next_value = motor.iloc[i + 2]
-#         event_added = False
+    for i in range(len(motor) - 2):
+        current = motor.iloc[i]
+        next_value = motor.iloc[i + 1]
+        next_next_value = motor.iloc[i + 2]
+        event_added = False
 
-#         # START 조건
-#         if current <= 1:
-#             if next_value >= 3:
-#                 event_added = True
-#                 one_cycle["start_time"] = chunk["timestamp"].iloc[i + 1]
-#             elif (1 < next_value < 3 and next_next_value >= 3):
-#                 event_added = True
-#                 one_cycle["start_time"] = chunk["timestamp"].iloc[i + 2]
+        # START 조건
+        if current <= 1:
+            if next_value >= 3:
+                event_added = True
+                one_cycle["start_time"] = chunk["timestamp"].iloc[i + 1]
+            elif (1 < next_value < 3 and next_next_value >= 3):
+                event_added = True
+                one_cycle["start_time"] = chunk["timestamp"].iloc[i + 2]
             
-#         # STOP 조건
-#         elif current >= 3:
-#             if next_value <= 1:
-#                 event_added = True
-#                 one_cycle["end_time"] = chunk["timestamp"].iloc[i + 1]
-#             elif (3 > next_value > 1 and next_next_value <= 1):
-#                 event_added = True
-#                 one_cycle["end_time"] = chunk["timestamp"].iloc[i + 2]
+        # STOP 조건
+        elif current >= 3:
+            if next_value <= 1:
+                event_added = True
+                one_cycle["end_time"] = chunk["timestamp"].iloc[i + 1]
+            elif (3 > next_value > 1 and next_next_value <= 1):
+                event_added = True
+                one_cycle["end_time"] = chunk["timestamp"].iloc[i + 2]
 
-#         else:
-#            continue
+        else:
+           continue
 
-#         # one_cycle의 start_time과 end_time이 채워지면 duration 채우고 operation_cycles에 저장
-#         if one_cycle["start_time"] and one_cycle["end_time"]:
-#             start = pd.to_datetime(one_cycle["start_time"])
-#             end = pd.to_datetime(one_cycle["end_time"])
+        # one_cycle의 start_time과 end_time이 채워지면 duration 채우고 operation_cycles에 저장
+        if one_cycle["start_time"] and one_cycle["end_time"]:
+            start = pd.to_datetime(one_cycle["start_time"])
+            end = pd.to_datetime(one_cycle["end_time"])
 
-#             one_cycle["duration"] = end - start
-#             operation_cycles.append(one_cycle)
+            one_cycle["duration"] = end - start
+            operation_cycles.append(one_cycle)
 
-#             if longest_time["duration"] == None or (longest_time["duration"] and longest_time["duration"] < end - start):
-#                 longest_time = one_cycle
+            if longest_time["duration"] == None or (longest_time["duration"] and longest_time["duration"] < end - start):
+                longest_time = one_cycle
 
-#             if shortest_time["duration"] ==  None or (shortest_time["duration"] and shortest_time["duration"] > end - start):
-#                 shortest_time = one_cycle
+            if shortest_time["duration"] ==  None or (shortest_time["duration"] and shortest_time["duration"] > end - start):
+                shortest_time = one_cycle
 
-#             one_cycle = {
-#               "start_time" : None,
-#               "end_time" : None,
-#               "duration" : None
-#             }
+            one_cycle = {
+              "start_time" : None,
+              "end_time" : None,
+              "duration" : None
+            }
 
-#     # 이번 chunk의 마지막 2행을 다음 chunk를 위해 저장
-#     previous_rows = chunk.tail(2).copy()
+    # 이번 chunk의 마지막 2행을 다음 chunk를 위해 저장
+    previous_rows = chunk.tail(2).copy()
 
-# print("\noperation_cycles")
-# print(len(operation_cycles))
+print("\noperation_cycles")
+print(len(operation_cycles))
 # print(operation_cycles[:5])
 
 # print("\n정상확인 - 가장 긴 운행 시간, 가장 짧은 운행 시간")
@@ -525,30 +525,30 @@ print(cnt)
 # 가장 긴 운행이 3일, 가장 짧은 운행이 10초로 정상적으로 보이지 않아 다시 확인
 # 긴 운행은 데이터 설명에서 확인한 6월 5일~7일 Air Leak / High stress 기록과 겹치는 구간
 
-targets = [
-    ("LONG START", "2020-06-05 09:47:00", "2020-06-05 09:50:00"),
-    ("LONG STOP",  "2020-06-08 14:00:00", "2020-06-08 14:03:00"),
-    ("SHORT",      "2020-05-15 21:12:00", "2020-05-15 21:15:00"),
-]
+# targets = [
+#     ("LONG START", "2020-06-05 09:47:00", "2020-06-05 09:50:00"),
+#     ("LONG STOP",  "2020-06-08 14:00:00", "2020-06-08 14:03:00"),
+#     ("SHORT",      "2020-05-15 21:12:00", "2020-05-15 21:15:00"),
+# ]
 
-for chunk in pd.read_csv(
-    csv_path,
-    chunksize=100_000,
-    usecols=["timestamp", "Motor_current"]
-):
-    chunk["timestamp"] = pd.to_datetime(chunk["timestamp"])
+# for chunk in pd.read_csv(
+#     csv_path,
+#     chunksize=100_000,
+#     usecols=["timestamp", "Motor_current"]
+# ):
+#     chunk["timestamp"] = pd.to_datetime(chunk["timestamp"])
 
-    for name, start, end in targets:
-        condition = (
-            (chunk["timestamp"] >= start)
-            & (chunk["timestamp"] <= end)
-        )
+#     for name, start, end in targets:
+#         condition = (
+#             (chunk["timestamp"] >= start)
+#             & (chunk["timestamp"] <= end)
+#         )
 
-        result = chunk.loc[condition, ["timestamp", "Motor_current"]]
+#         result = chunk.loc[condition, ["timestamp", "Motor_current"]]
 
-        if not result.empty:
-            print(f"\n{name}")
-            print(result.to_string(index=False))
+#         if not result.empty:
+#             print(f"\n{name}")
+#             print(result.to_string(index=False))
 
 # SHORT
 #           timestamp  Motor_current
@@ -615,3 +615,14 @@ for chunk in pd.read_csv(
 # 2020-06-08 14:02:54         0.0450
 
 # Motor_current 임계값을 기반으로 정의한 START/STOP 추출 로직은 전체 이벤트의 교대 여부와 극단값의 원본 데이터 검증 결과, 내부적으로 일관되게 동작함을 확인.
+
+print("\n1시간 이상 지속된 사이클 수:")
+cycle_df = pd.DataFrame(operation_cycles)
+# print(cycle_df.head())
+# print(cycle_df.dtypes)
+# print(cycle_df["duration"].describe())
+print((cycle_df["duration"] >= pd.Timedelta(hours=1)).sum())
+print((cycle_df["duration"] >= pd.Timedelta(hours=6)).sum())
+print((cycle_df["duration"] >= pd.Timedelta(hours=24)).sum())
+
+print(cycle_df.loc[cycle_df["duration"] >= pd.Timedelta(hours=24), ["start_time", "end_time", "duration"]])
