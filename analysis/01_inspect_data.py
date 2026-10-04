@@ -616,13 +616,65 @@ print(len(operation_cycles))
 
 # Motor_current 임계값을 기반으로 정의한 START/STOP 추출 로직은 전체 이벤트의 교대 여부와 극단값의 원본 데이터 검증 결과, 내부적으로 일관되게 동작함을 확인.
 
-print("\n1시간 이상 지속된 사이클 수:")
+print("\n")
 cycle_df = pd.DataFrame(operation_cycles)
 # print(cycle_df.head())
 # print(cycle_df.dtypes)
 # print(cycle_df["duration"].describe())
-print((cycle_df["duration"] >= pd.Timedelta(hours=1)).sum())
-print((cycle_df["duration"] >= pd.Timedelta(hours=6)).sum())
-print((cycle_df["duration"] >= pd.Timedelta(hours=24)).sum())
+# print((cycle_df["duration"] >= pd.Timedelta(hours=1)).sum())
+# print((cycle_df["duration"] >= pd.Timedelta(hours=6)).sum())
+# print((cycle_df["duration"] >= pd.Timedelta(hours=24)).sum())
 
-print(cycle_df.loc[cycle_df["duration"] >= pd.Timedelta(hours=24), ["start_time", "end_time", "duration"]])
+# print(cycle_df.loc[cycle_df["duration"] >= pd.Timedelta(hours=24), ["start_time", "end_time", "duration"]])
+
+print("\nDB에 저장할 수 있는 형태로 변환")
+cycle_df["equipment_id"] = 1
+cycle_df["start_time"] = pd.to_datetime(cycle_df["start_time"])
+cycle_df["end_time"] = pd.to_datetime(cycle_df["end_time"])
+cycle_df["duration_seconds"] = cycle_df["duration"].dt.total_seconds().astype("int64")
+print(cycle_df.head())
+print(cycle_df.dtypes)
+
+import psycopg
+
+# rows = cycle_df[
+#     ["equipment_id", "start_time", "end_time", "duration_seconds"]
+# ].itertuples(index=False, name=None)
+
+# rows = list(rows)
+# print(rows[:3])
+
+rows = []
+
+for row in cycle_df[
+    ["equipment_id", "start_time", "end_time", "duration_seconds"]
+].itertuples(index=False):
+
+    rows.append((
+        int(row.equipment_id),
+        row.start_time.to_pydatetime(),
+        row.end_time.to_pydatetime(),
+        int(row.duration_seconds)
+    ))
+
+print("\n")
+print(rows[:3])
+print(len(rows))
+
+# DB에 저장 - 저장완료했으므로 재실행되지 않도록 주석처리함
+
+# with psycopg.connect(
+#     dbname="metro_anomaly",
+#     user="mycomputer"
+# ) as conn:
+#     with conn.cursor() as cur:
+#         cur.executemany(
+#             """
+#             INSERT INTO operation_cycle
+#                 (equipment_id, start_time, end_time, duration_seconds)
+#             VALUES (%s, %s, %s, %s);
+#             """,
+#             rows
+#         )
+
+#         conn.commit()
